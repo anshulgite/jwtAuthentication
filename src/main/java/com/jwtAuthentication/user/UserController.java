@@ -1,6 +1,5 @@
 package com.jwtAuthentication.user;
 
-import com.jwtAuthentication.auth.AuthRequest;
 import com.jwtAuthentication.common.ApiResponse;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
@@ -15,16 +14,6 @@ public class UserController {
         this.userService = userService;
     }
 
-    @PostMapping
-    public ApiResponse<UserEntity> saveUser(@RequestBody UserEntity user) {
-        try {
-            UserEntity userEntity = userService.saveUser(user);
-            return ApiResponse.success(userEntity, "User saved successfully");
-        }catch (Exception e)
-        {
-            return ApiResponse.error(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-    }
 
     @GetMapping("/{username}")
     public ApiResponse<UserEntity> getUser(@PathVariable String username) {
