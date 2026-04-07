@@ -1,0 +1,21 @@
+spring:
+  application:
+    name: jwtAuthentication
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+
+  #mysql
+  datasource:
+    url: jdbc:mysql://localhost:3306/jwt?useSSL=false&serverTimezone=UTC&createDatabaseIfNotExist=true
+    username: root
+    password: root
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+  #create basic auth
+  security:
+    user:
+      name: user
+      password: user123
