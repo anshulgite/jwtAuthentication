@@ -19,6 +19,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.time.LocalDateTime;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -106,4 +107,35 @@ public class AuthController {
 
         throw new RuntimeException("Invalid Refresh Token");
     }
+
+    @PostMapping("/logout")
+    public String logout(@RequestBody Map<String, String> request) {
+
+        String refreshToken = request.get("refreshToken");
+        if(jwtUtil.validateRefreshToken(refreshToken)) {
+            RefreshToken rt = refreshTokenService.findByToken(refreshToken)
+                    .orElseThrow(() -> new RuntimeException("Token not found"));
+
+            rt.setRevoked(true);
+            refreshTokenService.save(rt);
+        }
+        return "Logged out successfully";
+    }
+
+   @PostMapping("/logoutAll")
+    public String logoutAll(@RequestBody Map<String, String> request) {
+
+       String refreshToken = request.get("refreshToken");
+       if(jwtUtil.validateRefreshToken(refreshToken)) {
+           RefreshToken rt = refreshTokenService.findByToken(refreshToken)
+                   .orElseThrow(() -> new RuntimeException("Token not found"));
+
+           String username = jwtUtil.extractUsername(refreshToken);
+           List<RefreshToken> byUsername = refreshTokenService.findByUsername(username);
+           byUsername.forEach(token -> token.setRevoked(true));
+           refreshTokenService.saveAll(byUsername);
+
+       }
+       return "Logged out successfully";
+   }
 }

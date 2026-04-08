@@ -16,7 +16,7 @@ import java.util.Date;
 public class JwtUtil {
 
 
-    private RefreshTokenRepository refreshTokenRepository;
+    private final RefreshTokenRepository refreshTokenRepository;
 
     @Autowired
     public JwtUtil(RefreshTokenRepository refreshTokenRepository) {
@@ -75,11 +75,7 @@ public class JwtUtil {
             }
 
             // 4. expiry check
-            if (rt.getExpiryDate().isBefore(LocalDateTime.now())) {
-                return false;
-            }
-
-            return true;
+            return !rt.getExpiryDate().isBefore(LocalDateTime.now());
 
         } catch (Exception e) {
             return false;
