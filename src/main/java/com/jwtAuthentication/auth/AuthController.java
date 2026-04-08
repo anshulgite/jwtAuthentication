@@ -97,10 +97,17 @@ public class AuthController {
         String role = claims.get("role", String.class);
         if (jwtUtil.validateRefreshToken(refreshToken)) {
 
+            RefreshToken byToken = refreshTokenService.findByToken(refreshToken).orElseThrow(() -> new RuntimeException("Token not found"));
+
             String newAccessToken = jwtUtil.generateToken(username,role);
+            String newRefreshToken = jwtUtil.generateRefreshToken(username,role);
+
+            byToken.setToken(newRefreshToken);
+            refreshTokenService.save(byToken);
 
             Map<String, String> response = new HashMap<>();
             response.put("accessToken", newAccessToken);
+            response.put("refreshToken", newRefreshToken);
 
             return response;
         }
