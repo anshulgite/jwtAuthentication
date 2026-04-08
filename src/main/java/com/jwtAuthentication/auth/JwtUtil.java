@@ -2,6 +2,7 @@ package com.jwtAuthentication.auth;
 
 import com.jwtAuthentication.auth.refreshToken.RefreshToken;
 import com.jwtAuthentication.auth.refreshToken.RefreshTokenRepository;
+import com.jwtAuthentication.common.Encryption;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
@@ -29,13 +30,15 @@ public class JwtUtil {
     }
 
 
-    public String generateToken(String username,String role) {
+    public String generateToken(String username,String role,Long userId,String email) {
         return Jwts.builder()
                 .setSubject(username)
                 .setIssuedAt(new Date())
                 .setExpiration(new Date(System.currentTimeMillis() + 1000 * 60 * 60))
                 .signWith(getKey())
                 .claim("role", role)
+                .claim("userId", userId)
+                .claim("email", email)
                 .compact();
     }
 
@@ -66,7 +69,7 @@ public class JwtUtil {
             }
 
             // 2. DB check
-            RefreshToken rt = refreshTokenRepository.findByToken(token)
+            RefreshToken rt = refreshTokenRepository.findByToken(Encryption.hashToken(token))
                     .orElseThrow(() -> new RuntimeException("Not found"));
 
             // 3. revoked check

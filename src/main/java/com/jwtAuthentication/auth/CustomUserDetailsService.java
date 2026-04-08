@@ -1,10 +1,10 @@
 package com.jwtAuthentication.auth;
 
+import com.jwtAuthentication.auth.refreshToken.CustomeUserDetails;
 import com.jwtAuthentication.user.UserEntity;
 import com.jwtAuthentication.user.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.stereotype.Service;
 
@@ -17,14 +17,17 @@ public class CustomUserDetailsService implements UserDetailsService {
     private UserRepository userRepo;
 
     @Override
-    public UserDetails loadUserByUsername(String username) {
+    public CustomeUserDetails loadUserByUsername(String username) {
 
         UserEntity user = userRepo.findByUsername(username);
 
-        return new org.springframework.security.core.userdetails.User(
+        return new CustomeUserDetails(
+                user.getUserId(),
                 user.getUsername(),
                 user.getPassword(),
+                user.getEmail(),
                 List.of(new SimpleGrantedAuthority(user.getUserRole()))
+
         );
     }
 

@@ -1,7 +1,11 @@
 package com.jwtAuthentication.user;
 
+import com.jwtAuthentication.auth.refreshToken.CustomeUserDetails;
 import com.jwtAuthentication.common.ApiResponse;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.access.prepost.PostAuthorize;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -77,5 +81,20 @@ public class UserController {
         }
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
+    @PostAuthorize("hasRole('ADMIN')")
+    @PostMapping("/test-login-and-user")
+    public ApiResponse<String> testLoginAndUer(@RequestParam String test, Authentication authentication) {
+        // get current logged-in user details from security context
 
+        String username = authentication.getName();
+        CustomeUserDetails customUserDetails = (CustomeUserDetails) authentication.getPrincipal();
+        Long userId = customUserDetails.getUserId();
+        String email = customUserDetails.getEmail();
+        String userRole = customUserDetails.getAuthorities().toString();
+        String userPassword = customUserDetails.getPassword();
+
+        String combineString = "userId : "+userId+",username  :"+username +" "+test+" email : "+email+" userRole : "+userRole;
+        return ApiResponse.success(combineString, "User logged in successfully");
+    }
 }

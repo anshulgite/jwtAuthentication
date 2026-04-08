@@ -1,8 +1,10 @@
 package com.jwtAuthentication.auth;
 
+import com.jwtAuthentication.auth.refreshToken.CustomeUserDetails;
 import com.jwtAuthentication.auth.refreshToken.RefreshToken;
 import com.jwtAuthentication.auth.refreshToken.RefreshTokenService;
 import com.jwtAuthentication.common.ApiResponse;
+import com.jwtAuthentication.common.Encryption;
 import com.jwtAuthentication.user.UserEntity;
 import com.jwtAuthentication.user.UserInterface;
 import io.jsonwebtoken.Claims;
@@ -11,12 +13,12 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.security.NoSuchAlgorithmException;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
@@ -55,7 +57,7 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    public Map<String, String> login(@RequestBody AuthRequest request) {
+    public Map<String, String> login(@RequestBody AuthRequest request) throws NoSuchAlgorithmException {
 
         Authentication authenticate = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(
@@ -64,16 +66,18 @@ public class AuthController {
                 )
         );
 
-        UserDetails userDetails = (UserDetails) authenticate.getPrincipal();
+       CustomeUserDetails userDetails = (CustomeUserDetails) authenticate.getPrincipal();
 
         assert userDetails != null;
         String role = userDetails.getAuthorities().iterator().next().getAuthority();
+        Long userId = userDetails.getUserId();
+        String email = userDetails.getEmail();
 
-        String accessToken = jwtUtil.generateToken(request.getUsername(),role);
+        String accessToken = jwtUtil.generateToken(request.getUsername(),role,userId,email);
         String refreshToken = jwtUtil.generateRefreshToken(request.getUsername(),role);
 
         RefreshToken rt = new RefreshToken();
-        rt.setToken(refreshToken);
+        rt.setToken(Encryption.hashToken(refreshToken));
         rt.setUsername(request.getUsername());
         rt.setExpiryDate(LocalDateTime.now().plusDays(7));
         rt.setRevoked(false);
@@ -88,21 +92,23 @@ public class AuthController {
     }
 
     @PostMapping("/refresh")
-    public Map<String, String> refresh(@RequestBody Map<String, String> request) {
+    public Map<String, String> refresh(@RequestBody Map<String, String> request) throws NoSuchAlgorithmException {
 
         String refreshToken = request.get("refreshToken");
 
         String username = jwtUtil.extractUsername(refreshToken);
         Claims claims = jwtUtil.getClaims(refreshToken);
         String role = claims.get("role", String.class);
+        String email = claims.get("email", String.class);
+        Long userId = claims.get("userId", Long.class);
         if (jwtUtil.validateRefreshToken(refreshToken)) {
 
-            RefreshToken byToken = refreshTokenService.findByToken(refreshToken).orElseThrow(() -> new RuntimeException("Token not found"));
+            RefreshToken byToken = refreshTokenService.findByToken(Encryption.hashToken(refreshToken)).orElseThrow(() -> new RuntimeException("Token not found"));
 
-            String newAccessToken = jwtUtil.generateToken(username,role);
+            String newAccessToken = jwtUtil.generateToken(username,role,userId,email);
             String newRefreshToken = jwtUtil.generateRefreshToken(username,role);
 
-            byToken.setToken(newRefreshToken);
+            byToken.setToken(Encryption.hashToken(newRefreshToken));
             refreshTokenService.save(byToken);
 
             Map<String, String> response = new HashMap<>();

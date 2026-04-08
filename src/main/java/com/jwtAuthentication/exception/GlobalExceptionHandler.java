@@ -2,6 +2,7 @@ package com.jwtAuthentication.exception;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
@@ -47,4 +48,18 @@ public class GlobalExceptionHandler {
         
         return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
     }
+
+    @ExceptionHandler(AccessDeniedException.class)
+    public ResponseEntity<Map<String, Object>> handleAccessDeniedException(AccessDeniedException ex) {
+        Map<String, Object> response = new HashMap<>();
+        response.put("timestamp", LocalDateTime.now());
+        response.put("status", HttpStatus.FORBIDDEN.value());
+        response.put("error", "Access Denied");
+        response.put("message", "You don't have permission to access this resource");
+        response.put("path", "Authorization failed");
+        
+        return new ResponseEntity<>(response, HttpStatus.FORBIDDEN);
+    }
+
+
 }
