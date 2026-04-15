@@ -10,4 +10,5 @@ public interface UserInterface {
     public boolean deleteUser(Long userId);
     public UserEntity getUserById(Long id);
     public List<UserEntity> getAllUsers();
+    public boolean changePassword(String username, String currentPassword, String newPassword);
 }

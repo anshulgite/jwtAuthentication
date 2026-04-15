@@ -3,11 +3,11 @@ package com.jwtAuthentication.user;
 import com.jwtAuthentication.common.Validators;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.interceptor.TransactionAspectSupport;
 
-import java.util.Arrays;
 import java.util.List;
 
 @Service
@@ -16,6 +16,7 @@ public class UserService implements UserInterface {
     Logger logger = LoggerFactory.getLogger(this.getClass());
 
     private UserRepository userRepository;
+    private final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
 
     public UserService(UserRepository userRepository) {
         this.userRepository = userRepository;
@@ -81,6 +82,29 @@ public class UserService implements UserInterface {
        {
            throw new RuntimeException("user not exist");
        }
+    }
+
+    @Override
+    @Transactional
+    public boolean changePassword(String username, String currentPassword, String newPassword) {
+        try {
+            UserEntity user = userRepository.findByUsername(username);
+            if (user == null) {
+                throw new RuntimeException("User not found");
+            }
+            
+            if (!passwordEncoder.matches(currentPassword, user.getPassword())) {
+                throw new RuntimeException("Current password is incorrect");
+            }
+            
+            user.setPassword(Validators.encodePassword(newPassword));
+            userRepository.save(user);
+            
+            return true;
+        } catch (Exception e) {
+            logger.error("Error while changing password", e);
+            throw new RuntimeException(e.getMessage());
+        }
     }
 
 }

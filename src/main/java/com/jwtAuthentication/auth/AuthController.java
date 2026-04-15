@@ -151,4 +151,31 @@ public class AuthController {
        }
        return "Logged out successfully";
    }
+
+   @PostMapping("/changePassword")
+   public ApiResponse<UserEntity> changePassword(@RequestBody Map<String, String> request) {
+        try {
+            String username = request.get("username");
+            String currentPassword = request.get("currentPassword");
+            String newPassword = request.get("newPassword");
+            
+            if (username == null || currentPassword == null || newPassword == null) {
+                return ApiResponse.error("Username, current password, and new password are required", HttpStatus.BAD_REQUEST);
+            }
+            
+            if (newPassword.length() < 6) {
+                return ApiResponse.error("New password must be at least 6 characters long", HttpStatus.BAD_REQUEST);
+            }
+            
+            boolean success = userService.changePassword(username, currentPassword, newPassword);
+            if (success) {
+                UserEntity updatedUser = userService.getUser(username);
+                return ApiResponse.success(updatedUser, "Password changed successfully");
+            } else {
+                return ApiResponse.error("Failed to change password", HttpStatus.INTERNAL_SERVER_ERROR);
+            }
+        } catch (Exception e) {
+            return ApiResponse.error(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+   }
 }
