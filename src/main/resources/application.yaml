@@ -19,3 +19,16 @@ spring:
     user:
       name: user
       password: user123
+
+  #google gmail config
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: anshulgite2000@gmail.com
+    password: mbxvccyocqhlxmha
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true

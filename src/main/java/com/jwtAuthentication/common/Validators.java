@@ -2,8 +2,6 @@ package com.jwtAuthentication.common;
 
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
-import java.util.Base64;
-
 public class Validators {
 
     private static final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
@@ -38,6 +36,26 @@ public class Validators {
 
     public static String encodePassword(String password) {
         return passwordEncoder.encode(password);
+    }
+    
+    public static boolean isValidPassword(String password) {
+        try {
+            if (password == null || password.length() < 8) {
+                throw new RuntimeException("Password must be at least 8 characters long");
+            }
+            if (!password.matches(".*[A-Z].*")) {
+                throw new RuntimeException("Password must contain at least one uppercase letter");
+            }
+            if (!password.matches(".*[a-z].*")) {
+                throw new RuntimeException("Password must contain at least one lowercase letter");
+            }
+            if (!password.matches(".*\\d.*")) {
+                throw new RuntimeException("Password must contain at least one digit");
+            }
+            return true;
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to validate password: " + e.getMessage());
+        }
     }
 
 }

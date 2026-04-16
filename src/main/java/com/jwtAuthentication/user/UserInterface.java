@@ -11,4 +11,6 @@ public interface UserInterface {
     public UserEntity getUserById(Long id);
     public List<UserEntity> getAllUsers();
     public boolean changePassword(String username, String currentPassword, String newPassword);
+    public String forgotPassword(String username);
+    public String resetPasswordWithOtp(String username, String otp, String newPassword);
 }

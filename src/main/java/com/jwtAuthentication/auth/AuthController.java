@@ -153,11 +153,11 @@ public class AuthController {
    }
 
    @PostMapping("/changePassword")
-   public ApiResponse<UserEntity> changePassword(@RequestBody Map<String, String> request) {
+   public ApiResponse<UserEntity> changePassword(@RequestBody ChangePasswordRequest request) {
         try {
-            String username = request.get("username");
-            String currentPassword = request.get("currentPassword");
-            String newPassword = request.get("newPassword");
+            String username = request.username();
+            String currentPassword = request.currentPassword();
+            String newPassword = request.newPassword();
             
             if (username == null || currentPassword == null || newPassword == null) {
                 return ApiResponse.error("Username, current password, and new password are required", HttpStatus.BAD_REQUEST);
@@ -174,6 +174,39 @@ public class AuthController {
             } else {
                 return ApiResponse.error("Failed to change password", HttpStatus.INTERNAL_SERVER_ERROR);
             }
+        } catch (Exception e) {
+            return ApiResponse.error(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+   }
+
+   @PostMapping("/forgotPassword")
+   public ApiResponse<String> forgotPassword(@RequestBody ForgotPasswordRequest request) {
+        try {
+            String username = request.username();
+            if (username == null || username.trim().isEmpty()) {
+                return ApiResponse.error("Username is required", HttpStatus.BAD_REQUEST);
+            }
+            
+            String result = userService.forgotPassword(username);
+            return ApiResponse.success(result, "OTP sent successfully");
+        } catch (Exception e) {
+            return ApiResponse.error(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+   }
+
+   @PostMapping("/resetPassword")
+   public ApiResponse<String> resetPassword(@RequestBody ResetPasswordRequest request) {
+        try {
+            String username = request.username();
+            String otp = request.otp();
+            String newPassword = request.newPassword();
+            
+            if (username == null || otp == null || newPassword == null) {
+                return ApiResponse.error("Username, OTP, and new password are required", HttpStatus.BAD_REQUEST);
+            }
+            
+            String result = userService.resetPasswordWithOtp(username, otp, newPassword);
+            return ApiResponse.success(result, "Password reset successfully");
         } catch (Exception e) {
             return ApiResponse.error(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
         }

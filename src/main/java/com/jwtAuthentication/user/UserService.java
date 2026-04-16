@@ -1,5 +1,6 @@
 package com.jwtAuthentication.user;
 
+import com.jwtAuthentication.auth.otpVerification.OtpService;
 import com.jwtAuthentication.common.Validators;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -16,10 +17,12 @@ public class UserService implements UserInterface {
     Logger logger = LoggerFactory.getLogger(this.getClass());
 
     private UserRepository userRepository;
+    private final OtpService otpService;
     private final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
 
-    public UserService(UserRepository userRepository) {
+    public UserService(UserRepository userRepository, OtpService otpService) {
         this.userRepository = userRepository;
+        this.otpService = otpService;
     }
 
    @Override
@@ -103,6 +106,66 @@ public class UserService implements UserInterface {
             return true;
         } catch (Exception e) {
             logger.error("Error while changing password", e);
+            throw new RuntimeException(e.getMessage());
+        }
+    }
+
+    @Override
+    @Transactional
+    public String forgotPassword(String username) {
+        try {
+            if (username == null || username.trim().isEmpty()) {
+                throw new RuntimeException("Username cannot be empty");
+            }
+            
+            UserEntity user = userRepository.findByUsername(username);
+            if (user == null) {
+                throw new RuntimeException("User with this username does not exist");
+            }
+            
+            String email = user.getEmail();
+            Validators.isValidEmail(email);
+            
+            String otp = otpService.generateOtp(email);
+            logger.info("OTP sent to email: {} for username: {}", email, username);
+            
+            return "OTP sent to your registered email. Please check your inbox.";
+        } catch (Exception e) {
+            logger.error("Error in forgot password for username: {}", username, e);
+            throw new RuntimeException(e.getMessage());
+        }
+    }
+
+    @Override
+    @Transactional
+    public String resetPasswordWithOtp(String username, String otp, String newPassword) {
+        try {
+            if (username == null || username.trim().isEmpty()) {
+                throw new RuntimeException("Username cannot be empty");
+            }
+            
+            UserEntity user = userRepository.findByUsername(username);
+            if (user == null) {
+                throw new RuntimeException("User with this username does not exist");
+            }
+            
+            String email = user.getEmail();
+            Validators.isValidEmail(email);
+            
+            if (!otpService.verifyOtp(email, otp)) {
+                throw new RuntimeException("Invalid or expired OTP");
+            }
+            
+            Validators.isValidPassword(newPassword);
+            user.setPassword(Validators.encodePassword(newPassword));
+            userRepository.save(user);
+            
+            otpService.markOtpAsUsed(email);
+            
+            logger.info("Password reset successful for username: {}", username);
+            return "Password reset successful";
+        } catch (Exception e) {
+            logger.error("Error in reset password for username: {}", username, e);
             throw new RuntimeException(e.getMessage());
         }
     }
